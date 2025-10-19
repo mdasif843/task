@@ -1,94 +1,608 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-    <meta charset="UTF-R">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Task App</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        /* বেসিক রিসেট এবং ডার্ক থিম */
+        :root {
+            --tg-theme-bg-color: #1a1a1a;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-button-color: #3498db;
+            --tg-theme-button-text-color: #ffffff;
+            --card-bg-color: #2c2c2e;
+            --green-color: #2ecc71;
+            --yellow-color: #f1c40f;
+            --red-color: #e74c3c;
+            --primary-text-color: #ffffff;
+            --secondary-text-color: #aaaaaa;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--primary-text-color);
+            overscroll-behavior: none; /* বাউন্স ইফেক্ট বন্ধ করা */
+        }
+
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 70px; /* নিচের নেভিগেশন বারের জন্য জায়গা */
+            box-sizing: border-box;
+        }
+
+        /* --- পেজ দেখানোর সিস্টেম --- */
+        .page {
+            display: none; /* ডিফল্টভাবে সব পেজ লুকানো থাকবে */
+            padding: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active {
+            display: block; /* শুধু .active ক্লাসের পেজটি দেখা যাবে */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- ওয়েলকাম পপআপ --- */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .popup-content {
+            background: var(--card-bg-color);
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+        .popup-content h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .popup-content ul {
+            padding-left: 20px;
+            color: var(--secondary-text-color);
+        }
+        .popup-content li {
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .popup-content button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* --- হেডার / প্রোফাইল সেকশন --- */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .profile-pic {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid var(--tg-theme-button-color);
+        }
+        .profile-details h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .profile-details span {
+            font-size: 1em;
+            color: var(--yellow-color);
+            font-weight: bold;
+        }
+
+        /* --- কার্ড স্টাইল --- */
+        .card {
+            background: var(--card-bg-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .card-header {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        /* হোম পেজ: স্ট্যাটস গ্রিড */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .stat-box {
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-box .stat-title {
+            font-size: 0.9em;
+            color: var(--secondary-text-color);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .stat-box .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        /* রেফার কার্ড */
+        .refer-card .refer-link-box {
+            background: var(--tg-theme-bg-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+            text-align: center;
+            color: var(--secondary-text-color);
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        .reward-badge {
+            background: rgba(46, 204, 113, 0.2);
+            color: var(--green-color);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        /* --- টাস্ক পেজ --- */
+        .task-card {
+            background: var(--card-bg-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--tg-theme-button-color);
+        }
+        .task-card h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        .task-reward {
+            color: var(--green-color);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .task-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--tg-theme-button-color);
+            color: var(--tg-theme-button-color);
+        }
+        .btn-green {
+            background-color: var(--green-color);
+            color: #000;
+        }
+        .btn-green:disabled {
+            background-color: #555;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        /* --- উইথড্র পেজ --- */
+        .withdraw-balance {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .withdraw-balance .balance-title {
+            font-size: 1em;
+            color: var(--secondary-text-color);
+        }
+        .withdraw-balance .balance-amount {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--yellow-color);
+            margin: 5px 0;
+        }
+
+        .info-box {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid var(--tg-theme-button-color);
+            color: #dbeeff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .info-box p {
+            margin: 5px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--secondary-text-color);
+            font-size: 0.9em;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: var(--primary-text-color);
+            font-size: 1em;
+            box-sizing: border-box; /* padding সহ width ঠিক রাখে */
+        }
+        .btn-full {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+
+        /* --- নিচের নেভিগেশন বার --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 500px; /* অ্যাপ কন্টেইনারের সাথে মিল রেখে */
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--card-bg-color);
+            border-top: 1px solid #444;
+            padding: 8px 0;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8em;
+            color: var(--secondary-text-color);
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-item .nav-icon {
+            font-size: 1.4em;
+            margin-bottom: 3px;
+        }
+        .nav-item.active {
+            color: var(--tg-theme-button-color);
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <div class="profile-info">
-                <img src="https://via.placeholder.com/50" alt="Profile" class="profile-pic">
-                <div class="profile-details">
-                    <span class="user-name">Loading...</span>
-                    <span class="user-id">BDTO.05</span>
-                </div>
-            </div>
-        </header>
 
-        <section class="balance-section">
-            <span class="balance-title">Available Balance</span>
-            <h1 class="balance-amount">BDT 0.05</h1>
-        </section>
-
-        <section class="action-buttons">
-            <button class="btn btn-green">Start Earning</button>
-            <button class="btn btn-yellow">Start Tasks</button>
-        </section>
-
-        <section class="stats-section">
-            <div class="stat-box">
-                <div class="stat-icon green">↑</div>
-                <div class="stat-details">
-                    <span class="stat-title">Total Earning</span>
-                    <span class="stat-value">BDT 0.05</span>
-                </div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-icon red">↓</div>
-                <div class="stat-details">
-                    <span class="stat-title">Total Refer</span>
-                    <span class="stat-value">0</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="options-menu">
-            <div class="option-item">
-                <div class="option-icon">💬</div>
-                <span>Support</span>
-            </div>
-            <div class="option-item">
-                <div class="option-icon">💼</div>
-                <span>Invite</span>
-            </div>
-            <div class="option-item">
-                <div class="option-icon">🏧</div>
-                <span>Withdraw</span>
-            </div>
-            <div class="option-item">
-                <div class="option-icon">👤</div>
-                <span>Profile</span>
-            </div>
-        </section>
-
-        <nav class="bottom-nav">
-            <div class="nav-item active">
-                <div class="nav-icon">🏠</div>
-                <span>Home</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon">📋</div>
-                <span>Tasks</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon">👥</div>
-                <span></span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon">💸</div>
-                <span>Withdraw</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon">👤</div>
-                <span>Profile</span>
-            </div>
-        </nav>
+    <div id="welcome-popup" class="popup-overlay">
+        <div class="popup-content">
+            <h2>📢 স্বাগতম!</h2>
+            <p>আসসালামু আলাইকুম, সততার সাথে পেমেন্ট করছি। নিয়ম মেনে কাজ করলে ১০০% পেমেন্ট পাবেন ইনশাআল্লাহ।</p>
+            <ul>
+                <li>🔥 জয়েন বোনাস: ৫০ টাকা</li>
+                <li>💰 প্রতি রেফারে: ৩০ টাকা</li>
+                <li>📹 প্রতি বিজ্ঞাপনে: ২০ টাকা</li>
+                <li>⏰ প্রতিদিন ১০ টা করে বিজ্ঞাপন দেখার সুযোগ</li>
+                <li>✅ ১০০% পেমেন্ট গ্যারান্টি</li>
+            </ul>
+            <button id="close-popup-btn">বুঝছি</button>
+        </div>
     </div>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="script.js"></script>
+
+    <div class="app-container">
+
+        <div id="page-home" class="page active">
+            
+            <div class="profile-header">
+                <img id="user-photo" src="https://via.placeholder.com/60" alt="Profile" class="profile-pic">
+                <div class="profile-details">
+                    <h3 id="user-name">Loading...</h3>
+                    <span>ব্যালেন্স: <span id="home-balance">0.00</span> TAKA 💰</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-title">দৈনিক বিজ্ঞাপন দেখা</span>
+                    <span class="stat-value" id="task-progress-text">0/10</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-title">মোট রেফার</span>
+                    <span class="stat-value" id="refer-count">0</span>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">🎁 বন্ধুকে রেফার করুন এবং আয় করুন</div>
+                <p style="color: var(--secondary-text-color); font-size: 0.9em;">আপনার বন্ধু সাইন আপ করলে আপনি 40 TAKA বোনাস পাবেন।</p>
+                <div class="reward-badge">💰 প্রতি রেফারে 40 TAKA বোনাস</div>
+                <div class="refer-link-box" id="refer-link">
+                    https://t.me/yourbot/app?startapp=...
+                </div>
+            </div>
+        </div>
+
+        <div id="page-tasks" class="page">
+            
+            <div class="card">
+                <div class="card-header">দৈনিক টাস্ক প্রগ্রেস</div>
+                <h2 style="text-align: center; margin: 10px 0;" id="task-progress-text-2">0 / 20</h2>
+                <p style="text-align: center; color: var(--secondary-text-color); font-size: 0.9em;">আজ ২০ টি টাস্ক বাকি আছে</p>
+            </div>
+
+            <div class="task-card">
+                <h4>📹 বিজ্ঞাপন দেখুন</h4>
+                <div class="task-reward">🎁 রিওয়ার্ড: 35.00 TAKA</div>
+                <p style="color: var(--secondary-text-color); font-size: 0.9em;">প্রতিটি বিজ্ঞাপন দেখে ৩৫.০০ টাকা আয় করুন।</p>
+                <button class="btn btn-green claim-btn" data-reward="35">বিজ্ঞাপন দেখুন</button>
+            </div>
+
+            <div class="task-card">
+                <h4>✈️ টেলিগ্রাম চ্যানেল যোগ দিন</h4>
+                <div class="task-reward">🎁 রিওয়ার্ড: 200.00 TAKA</div>
+                <p style="color: var(--secondary-text-color); font-size: 0.9em;">চ্যানেলে জয়েন করুন তারপর চেক ও ক্লেইম বাটনে ক্লিক করুন।</p>
+                <div class="task-buttons">
+                    <button class="btn btn-outline" onclick="window.Telegram.WebApp.openTelegramLink('https://t.me/telegram')">চ্যানেল ওপেন</button>
+                    <button class="btn btn-green claim-btn" data-reward="200">চেক ও ক্লেইম</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="page-withdraw" class="page">
+            
+            <div class="withdraw-balance">
+                <span class="balance-title">Available Balance</span>
+                <h1 class="balance-amount" id="withdraw-balance-display">0.00</h1>
+                <span class="balance-title">TAKA</span>
+            </div>
+
+            <div class="info-box">
+                <p>ℹ️ ন্যূনতম উত্তোলনযোগ্য Amount: 1000.00 TAKA</p>
+                <p>👥 ন্যূনতম রেফারের প্রয়োজন: 20 জন</p>
+            </div>
+
+            <div class="form-group">
+                <label for="payment-method">পদ্ধতি নির্বাচন করুন</label>
+                <select id="payment-method">
+                    <option value="bkash">বিকাশ</option>
+                    <option value="nagad">নগদ</option>
+                    <option value="rocket">রকেট</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="account-number">একউন্ট নম্বর</label>
+                <input type="tel" id="account-number" placeholder="01XXXXXXXXX">
+            </div>
+
+            <div class="form-group">
+                <label for="amount">Amount (TAKA)</label>
+                <input type="number" id="amount" placeholder="ন্যূনতম 1000 TAKA">
+            </div>
+
+            <button class="btn-full" id="withdraw-submit-btn">রিকোয়েস্ট জমা দিন</button>
+        </div>
+
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-page="page-home">
+            <span class="nav-icon">🏠</span>
+            <span>হোম</span>
+        </div>
+        <div class="nav-item" data-page="page-tasks">
+            <span class="nav-icon">📋</span>
+            <span>টাস্ক</span>
+        </div>
+        <div class="nav-item" data-page="page-withdraw">
+            <span class="nav-icon">💸</span>
+            <span>উইথড্র</span>
+        </div>
+    </nav>
+
+
+    <script>
+        // যখন HTML ডকুমেন্ট লোড হওয়া শেষ হবে
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // --- গ্লোবাল ভ্যারিয়েবল ---
+            const tg = window.Telegram.WebApp;
+            tg.expand(); // অ্যাপটিকে বড় করে
+
+            // ইউজার ডেটা এবং স্টেট (অ্যাপের সকল তথ্য এখানে থাকবে)
+            let userState = {
+                id: 0,
+                name: "Guest User",
+                balance: 50.00,       // জয়েন বোনাস
+                tasksCompleted: 0,
+                referrals: 0,
+                totalTasks: 20
+            };
+
+            // --- এলিমেন্ট সিলেক্ট করা ---
+            const popup = document.getElementById('welcome-popup');
+            const closePopupBtn = document.getElementById('close-popup-btn');
+            const navButtons = document.querySelectorAll('.nav-item');
+            const pages = document.querySelectorAll('.page');
+            
+            // --- প্রাথমিক সেটআপ ---
+
+            // ১. টেলিগ্রাম থেকে ইউজার তথ্য লোড করা
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                userState.id = user.id;
+                userState.name = `${user.first_name} ${user.last_name || ''}`;
+                
+                // প্রোফাইল ছবি সেট করা
+                if (user.photo_url) {
+                    document.getElementById('user-photo').src = user.photo_url;
+                }
+                
+                // রেফারেল লিংক সেট করা
+                document.getElementById('refer-link').textContent = `https://t.me/${tg.initDataUnsafe.bot_username}?startapp=${user.id}`;
+            }
+            
+            // ২. UI আপডেট ফাংশন (সব ডাটা পেজে দেখানোর জন্য)
+            function updateUI() {
+                // সব ব্যালেন্স আপডেট
+                document.getElementById('home-balance').textContent = userState.balance.toFixed(2);
+                document.getElementById('withdraw-balance-display').textContent = userState.balance.toFixed(2);
+
+                // ইউজারের নাম
+                document.getElementById('user-name').textContent = userState.name;
+                
+                // টাস্ক প্রগ্রেস
+                const progressText = `${userState.tasksCompleted} / ${userState.totalTasks}`;
+                document.getElementById('task-progress-text').textContent = progressText;
+                document.getElementById('task-progress-text-2').textContent = progressText;
+
+                // রেফার কাউন্ট
+                document.getElementById('refer-count').textContent = userState.referrals;
+            }
+
+            // ৩. অ্যাপ লোড হওয়ার সাথে সাথে প্রথমবার UI আপডেট করা
+            updateUI();
+
+
+            // --- ইভেন্ট লিসেনার (Event Listeners) ---
+
+            // ১. পপআপ বন্ধ করার বাটন
+            closePopupBtn.addEventListener('click', () => {
+                popup.style.display = 'none';
+            });
+
+            // ২. নিচের নেভিগেশন বাটন (পেজ পরিবর্তন)
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetPageId = button.dataset.page; // e.g., "page-home"
+
+                    // সব পেজ থেকে 'active' ক্লাস সরানো
+                    pages.forEach(page => page.classList.remove('active'));
+                    // টার্গেট পেজে 'active' ক্লাস যোগ করা
+                    document.getElementById(targetPageId).classList.add('active');
+
+                    // সব বাটন থেকে 'active' ক্লাস সরানো
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    // ক্লিক করা বাটনে 'active' ক্লাস যোগ করা
+                    button.classList.add('active');
+                });
+            });
+
+            // ৩. টাস্ক ক্লেইম বাটন
+            const claimButtons = document.querySelectorAll('.claim-btn');
+            claimButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // বাটনটি ডিসেবল করা আছে কিনা চেক করা
+                    if (button.disabled) return;
+
+                    // ডেটা অ্যাট্রিবিউট থেকে রিওয়ার্ড অ্যামাউন্ট নেওয়া
+                    const reward = parseFloat(button.dataset.reward);
+                    
+                    // স্টেট আপডেট করা
+                    userState.balance += reward;
+                    userState.tasksCompleted += 1;
+
+                    // UI আপডেট করা (যাতে ব্যালেন্স সব পেজে রিফ্লেক্ট হয়)
+                    updateUI();
+
+                    // বাটনটি ডিসেবল করে দেওয়া
+                    button.textContent = '✅ ক্লেইমড';
+                    button.disabled = true;
+
+                    // ইউজারকে ফিডব্যাক দেওয়া
+                    tg.HapticFeedback.notificationOccurred('success');
+                    alert(`আপনি ${reward.toFixed(2)} TAKA ক্লেইম করেছেন!`);
+                });
+            });
+
+            // ৪. উইথড্র সাবমিট বাটন
+            document.getElementById('withdraw-submit-btn').addEventListener('click', () => {
+                const amount = parseFloat(document.getElementById('amount').value);
+                const accountNumber = document.getElementById('account-number').value;
+
+                // বেসিক ভ্যালিডেশন
+                if (!accountNumber || !amount) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                    alert("দয়া করে একউন্ট নম্বর এবং অ্যামাউন্ট লিখুন।");
+                    return;
+                }
+                if (amount < 1000) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                    alert("ন্যূনতম 1000 TAKA উইথড্র করতে হবে।");
+                    return;
+                }
+                if (amount > userState.balance) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                    alert("আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই।");
+                    return;
+                }
+                
+                // (এখানে আপনার ব্যাকএন্ডে রিকোয়েস্ট পাঠানোর কোড থাকবে)
+                
+                // আপাতত সিমুলেশন
+                alert("আপনার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে।");
+                
+                // ব্যালেন্স কমানো (সাকসেস হলে)
+                userState.balance -= amount;
+                updateUI(); // UI রিফ্রেশ
+            });
+
+        });
+    </script>
 </body>
 </html>
