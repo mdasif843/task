@@ -2,58 +2,90 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Task App</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
         :root {
             /* কালার প্যালেট */
-            --bg-color: #121217;
-            --card-color: #1E1E24;
-            --text-primary: #F5F5F7;
-            --text-secondary: #8A8A8E;
-            --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            --success-color: #34C759;
-            --border-color: #2a2a30;
+            --bg-deep: #0d0d12;
+            --bg-card: #16161c;
+            --bg-glass: rgba(22, 22, 28, 0.7);
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --border-color: #2a2a33;
+            --primary-neon: #6e45ff;
+            --primary-glow: rgba(110, 69, 255, 0.3);
+            --success-color: #00e096;
+            --error-color: #ff4d4d;
         }
 
         /* বেসিক রিসেট */
         body, html {
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-deep);
             color: var(--text-primary);
-            overscroll-behavior: none; /* পেজ বাউন্স বন্ধ করা */
+            overscroll-behavior: none;
+            scrollbar-width: none; /* Firefox */
+        }
+        body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
         }
 
         .app-container {
             max-width: 500px;
             margin: 0 auto;
             min-height: 100vh;
-            padding: 20px 20px 80px 20px; /* নিচের নেভিগেশন বারের জন্য জায়গা */
+            padding: 20px 20px 100px 20px; /* নিচের নেভিগেশন বারের জন্য জায়গা */
             box-sizing: border-box;
         }
 
-        /* --- পেজ দেখানোর সিস্টেম --- */
+        /* --- টোস্ট নোটিফিকেশন (Alert এর বদলে) --- */
+        #toast {
+            position: fixed;
+            top: -100px; /* শুরুতে স্ক্রিনের বাইরে */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background-color: var(--error-color);
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+            z-index: 2000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transition: top 0.4s ease-in-out;
+            text-align: center;
+        }
+        #toast.show {
+            top: 20px; /* দেখানোর সময় */
+        }
+        #toast.success {
+            background-color: var(--success-color);
+        }
+
+        /* --- পেজ সিস্টেম --- */
         .page {
             display: none;
-            animation: fadeIn 0.3s ease-in-out;
+            animation: fadeIn 0.4s ease;
         }
         .page.active {
             display: block;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- ওয়েলকাম পপআপ --- */
+        /* --- ওয়েলকাম পপআপ (এখনও আছে) --- */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -61,27 +93,26 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
         .popup-content {
-            background: var(--card-color);
+            background: var(--bg-card);
             padding: 25px;
-            border-radius: 20px;
+            border-radius: 24px;
             width: 90%;
-            max-width: 350px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 360px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
         }
         .popup-content h2 {
             margin-top: 0;
             text-align: center;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--primary-neon);
+            font-weight: 800;
         }
         .popup-content ul {
             padding-left: 20px;
@@ -89,114 +120,143 @@
         }
         .popup-content li {
             margin-bottom: 12px;
-            font-size: 0.9em;
-        }
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            font-size: 1.1em;
-            font-weight: 600;
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .btn-primary:active {
-            transform: scale(0.98);
-            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+            font-size: 0.95em;
         }
         
-        /* --- প্রোফাইল হেডার (সব পেজের উপরে) --- */
+        /* --- সাধারণ বাটন --- */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1em;
+            font-weight: 700;
+            background-color: var(--primary-neon);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 20px var(--primary-glow);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 10px var(--primary-glow);
+        }
+
+        /* --- হেডার --- */
         .profile-header {
             display: flex;
             align-items: center;
             margin-bottom: 25px;
         }
         .profile-pic {
-            width: 45px;
-            height: 45px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            margin-right: 12px;
+            margin-right: 14px;
             border: 2px solid var(--border-color);
         }
         .profile-details h3 {
             margin: 0;
-            font-size: 1.1em;
-            font-weight: 600;
+            font-size: 1.2em;
+            font-weight: 700;
         }
         .profile-details span {
             font-size: 0.9em;
-            color: var(--text-secondary);
+            color: var(--primary-neon);
+            font-weight: 500;
+        }
+
+        /* --- সেকশন টাইটেল --- */
+        .section-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            margin-top: 25px;
         }
 
         /* --- পেজ ১: হোম --- */
         .balance-card {
-            background: var(--primary-gradient);
+            background: var(--bg-card);
             padding: 25px;
-            border-radius: 20px;
+            border-radius: 24px;
             color: white;
             text-align: center;
             margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(106, 17, 203, 0.3);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
         }
-        .balance-card .balance-title {
-            font-size: 1em;
-            font-weight: 500;
-            opacity: 0.8;
+        /* গ্লো ইফেক্ট */
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                transparent,
+                var(--primary-glow),
+                transparent 30%
+            );
+            animation: rotate 5s linear infinite;
         }
-        .balance-card .balance-amount {
-            font-size: 3.2em;
-            font-weight: 700;
-            margin: 10px 0;
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
-        .balance-card .balance-currency {
-            font-size: 1.2em;
-            font-weight: 500;
-            opacity: 0.9;
-        }
-
-        .section-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            margin-bottom: 15px;
+        .balance-card-content {
+            position: relative;
+            z-index: 2;
+            background: var(--bg-card); /* ভিতরের কন্টেন্টকে মাস্ক করতে */
+            padding: 10px;
+            margin: -10px; /* গ্লো ঠিকমতো দেখানোর জন্য */
+            border-radius: 20px;
         }
         
+        .balance-title {
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .balance-amount {
+            font-size: 3.5em;
+            font-weight: 800;
+            margin: 5px 0;
+            color: var(--text-primary);
+        }
+        .balance-currency {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
         .stat-box {
-            background: var(--card-color);
+            background: var(--bg-card);
             padding: 20px;
             border-radius: 16px;
             text-align: center;
             border: 1px solid var(--border-color);
         }
-        .stat-box .stat-title {
+        .stat-title {
             font-size: 0.9em;
             color: var(--text-secondary);
             margin-bottom: 10px;
             display: block;
         }
-        .stat-box .stat-value {
-            font-size: 1.5em;
-            font-weight: 600;
+        .stat-value {
+            font-size: 1.6em;
+            font-weight: 700;
         }
-
-        .refer-card {
-            background: var(--card-color);
-            padding: 20px;
-            border-radius: 16px;
-            margin-top: 25px;
-            border: 1px solid var(--border-color);
-        }
-        .refer-card .refer-link-box {
-            background: var(--bg-color);
-            padding: 12px;
+        .refer-link-box {
+            background: var(--bg-deep);
+            padding: 14px;
             border-radius: 12px;
             font-family: monospace;
             font-size: 0.9em;
@@ -207,8 +267,8 @@
             border: 1px dashed var(--border-color);
         }
         .reward-badge {
-            background: rgba(52, 199, 89, 0.15);
-            color: var(--success-color);
+            background: var(--primary-glow);
+            color: var(--primary-neon);
             padding: 6px 12px;
             border-radius: 8px;
             font-weight: 600;
@@ -219,34 +279,46 @@
 
         /* --- পেজ ২: টাস্ক --- */
         .task-card {
-            background: var(--card-color);
+            background: var(--bg-card);
             padding: 20px;
             border-radius: 16px;
             margin-bottom: 15px;
             border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
+            transition: all 0.2s ease;
         }
-        .task-card .task-icon {
-            font-size: 1.8em;
+        .task-card:hover {
+            border-color: var(--primary-neon);
+        }
+        .task-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             margin-bottom: 10px;
         }
-        .task-card h4 {
-            margin: 0 0 5px 0;
-            font-size: 1.1em;
-            font-weight: 600;
+        .task-icon {
+            font-size: 1.8em;
+            background: var(--primary-glow);
+            width: 45px;
+            height: 45px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
         }
-        .task-card .task-reward {
+        .task-title h4 {
+            margin: 0;
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+        .task-reward {
             color: var(--success-color);
             font-weight: 600;
             font-size: 1em;
-            margin-bottom: 10px;
         }
-        .task-card .task-desc {
+        .task-desc {
             color: var(--text-secondary);
             font-size: 0.9em;
-            margin-bottom: 15px;
-            flex-grow: 1;
+            margin-bottom: 20px;
+            margin-top: 5px;
         }
         .task-buttons {
             display: flex;
@@ -254,9 +326,9 @@
         }
         .btn {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             font-size: 1em;
-            font-weight: 600;
+            font-weight: 700;
             border: none;
             border-radius: 12px;
             cursor: pointer;
@@ -264,12 +336,12 @@
         }
         .btn-outline {
             background: transparent;
-            border: 1.5px solid var(--text-secondary);
+            border: 2px solid var(--text-secondary);
             color: var(--text-secondary);
         }
         .btn-success {
             background-color: var(--success-color);
-            color: white;
+            color: #0d0d12;
         }
         .btn-success:disabled {
             background-color: #555;
@@ -291,26 +363,27 @@
         }
         .form-group input, .form-group select {
             width: 100%;
-            padding: 14px;
-            background: var(--card-color);
-            border: 1px solid var(--border-color);
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
             border-radius: 12px;
             color: var(--text-primary);
             font-size: 1em;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
+            transition: all 0.2s ease;
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #6a11cb;
-            box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.3);
+            border-color: var(--primary-neon);
+            box-shadow: 0 0 0 3px var(--primary-glow);
         }
         
         .info-box {
-            background: var(--card-color);
-            border-left: 4px solid #2575fc;
+            background: var(--bg-card);
+            border-left: 4px solid var(--primary-neon);
             color: var(--text-secondary);
-            padding: 15px;
+            padding: 15px 20px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 0.9em;
@@ -319,28 +392,31 @@
             margin: 8px 0;
         }
 
-        /* --- নিচের নেভিগেশন বার --- */
+        /* --- নিচের নেভিগেশন বার (গ্লাস স্টাইল) --- */
         .bottom-nav {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            max-width: 500px; /* অ্যাপ কন্টেইনারের সাথে মিল রেখে */
-            margin: 0 auto;
+            bottom: 20px; /* নিচ থেকে একটু গ্যাপ */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 480px; 
             display: flex;
             justify-content: space-around;
-            background-color: var(--card-color);
-            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px; /* গোলাকার এজ */
             padding: 10px 0;
             z-index: 100;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             font-size: 0.8em;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text-secondary);
             cursor: pointer;
             padding: 5px 12px;
@@ -352,12 +428,14 @@
             margin-bottom: 4px;
         }
         .nav-item.active {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.1);
+            color: var(--primary-neon);
+            background: var(--primary-glow);
         }
     </style>
 </head>
 <body>
+    
+    <div id="toast">This is a test message</div>
 
     <div id="welcome-popup" class="popup-overlay">
         <div class="popup-content">
@@ -385,9 +463,11 @@
         <main id="page-home" class="page active">
             
             <div class="balance-card">
-                <span class="balance-title">Available Balance</span>
-                <h1 class="balance-amount" id="home-balance">0.00</h1>
-                <span class="balance-currency">TAKA</span>
+                <div class="balance-card-content">
+                    <span class="balance-title">Available Balance</span>
+                    <h1 class="balance-amount" id="home-balance">0.00</h1>
+                    <span class="balance-currency">TAKA</span>
+                </div>
             </div>
 
             <div class="section-title">Statistics</div>
@@ -402,31 +482,36 @@
                 </div>
             </div>
 
-            <div class="refer-card">
-                <div class="section-title">🎁 রেফার করুন</div>
-                <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: -10px;">আপনার বন্ধু সাইন আপ করলে আপনি 40 TAKA বোনাস পাবেন।</p>
-                <div class="reward-badge">💰 প্রতি রেফারে 40 TAKA বোনাস</div>
-                <div class="refer-link-box" id="refer-link">
-                    Loading your refer link...
-                </div>
+            <div class="section-title">রেফার করুন</div>
+            <div class="refer-link-box" id="refer-link">
+                Loading your refer link...
             </div>
+            <div class="reward-badge">💰 প্রতি রেফারে 40 TAKA বোনাস</div>
         </main>
 
         <main id="page-tasks" class="page">
             <div class="section-title">Available Tasks</div>
 
             <div class="task-card">
-                <div class="task-icon">📹</div>
-                <h4>বিজ্ঞাপন দেখুন</h4>
-                <div class="task-reward">🎁 রিওয়ার্ড: 35.00 TAKA</div>
+                <div class="task-header">
+                    <div class="task-icon">📹</div>
+                    <div class="task-title">
+                        <h4>বিজ্ঞাপন দেখুন</h4>
+                        <div class="task-reward">🎁 রিওয়ার্ড: 35.00 TAKA</div>
+                    </div>
+                </div>
                 <p class="task-desc">প্রতিটি বিজ্ঞাপন দেখে ৩৫.০০ টাকা আয় করুন।</p>
                 <button class="btn btn-success claim-btn" data-reward="35" data-task-id="task1">ক্লেইম করুন</button>
             </div>
 
             <div class="task-card">
-                <div class="task-icon">✈️</div>
-                <h4>টেলিগ্রাম চ্যানেল যোগ দিন</h4>
-                <div class="task-reward">🎁 রিওয়ার্ড: 200.00 TAKA</div>
+                <div class="task-header">
+                    <div class="task-icon">✈️</div>
+                    <div class="task-title">
+                        <h4>টেলিগ্রাম চ্যানেল যোগ দিন</h4>
+                        <div class="task-reward">🎁 রিওয়ার্ড: 200.00 TAKA</div>
+                    </div>
+                </div>
                 <p class="task-desc">চ্যানেলে জয়েন করুন তারপর চেক ও ক্লেইম বাটনে ক্লিক করুন।</p>
                 <div class="task-buttons">
                     <button class="btn btn-outline" onclick="window.Telegram.WebApp.openTelegramLink('https://t.me/telegram')">চ্যানেল ওপেন</button>
@@ -445,7 +530,7 @@
             
             <div class="form-group">
                 <label>আপনার বর্তমান ব্যালেন্স</label>
-                <input type="text" id="withdraw-balance-display" value="0.00 TAKA" readonly style="background: var(--bg-color); color: var(--success-color); font-weight: bold;">
+                <input type="text" id="withdraw-balance-display" value="0.00 TAKA" readonly style="color: var(--success-color); font-weight: 700;">
             </div>
 
             <div class="form-group">
@@ -491,31 +576,54 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             
-            // --- গ্লোবাল ভ্যারিয়েবল ---
             const tg = window.Telegram.WebApp;
-            tg.expand(); // অ্যাপটিকে বড় করে
-            tg.setBackgroundColor("#121217"); // অ্যাপের ব্যাকগ্রাউন্ড কালার সেট করা
+            tg.expand(); 
+            tg.setHeaderColor("#0d0d12");
+            tg.setBackgroundColor("#0d0d12");
 
-            // ইউজার ডেটা এবং স্টেট
             let userState = {
                 id: 0,
                 name: "Guest User",
-                balance: 50.00,       // জয়েন বোনাস
+                balance: 50.00,
                 tasksCompleted: 0,
                 referrals: 0,
                 totalTasks: 20,
-                claimedTasks: [] // কোন টাস্কগুলো ক্লেইম করা হয়েছে তার লিস্ট
+                claimedTasks: [] 
             };
 
-            // --- এলিমেন্ট সিলেক্ট করা ---
             const popup = document.getElementById('welcome-popup');
             const closePopupBtn = document.getElementById('close-popup-btn');
             const navButtons = document.querySelectorAll('.nav-item');
             const pages = document.querySelectorAll('.page');
+            const toast = document.getElementById('toast');
             
-            // --- প্রাথমিক সেটআপ ---
+            // --- টোস্ট নোটিফিকেশন ফাংশন ---
+            function showToast(message, type = 'error') {
+                toast.textContent = message;
+                toast.className = ''; // রিসেট
+                
+                if (type === 'success') {
+                    toast.classList.add('success');
+                }
+                
+                toast.classList.add('show');
+                
+                // ৩ সেকেন্ড পর হাইড করা
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
 
-            // ১. টেলিগ্রাম থেকে ইউজার তথ্য লোড করা
+            // --- UI আপডেট ফাংশন ---
+            function updateUI() {
+                document.getElementById('home-balance').textContent = userState.balance.toFixed(2);
+                document.getElementById('withdraw-balance-display').value = `${userState.balance.toFixed(2)} TAKA`;
+                document.getElementById('user-name').textContent = userState.name;
+                document.getElementById('task-progress-text').textContent = `${userState.tasksCompleted}/${userState.totalTasks}`;
+                document.getElementById('refer-count').textContent = userState.referrals;
+            }
+
+            // --- প্রাথমিক সেটআপ ---
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const user = tg.initDataUnsafe.user;
                 userState.id = user.id;
@@ -526,123 +634,83 @@
                 if (user.photo_url) {
                     document.getElementById('user-photo').src = user.photo_url;
                 } else {
-                    document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${user.first_name[0]}&background=random`;
+                    document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${user.first_name[0]}&background=16161c&color=f0f0f5&bold=true`;
                 }
                 
-                // রেফারেল লিংক সেট করা (বটের ইউজারনেম দিয়ে)
-                let botUsername = tg.initDataUnsafe.bot_username || "yourbotusername"; // fallback
+                let botUsername = tg.initDataUnsafe.bot_username || "yourbot";
                 document.getElementById('refer-link').textContent = `t.me/${botUsername}?startapp=${user.id}`;
             }
-            
-            // ২. UI আপডেট ফাংশন (সব ডাটা পেজে দেখানোর জন্য)
-            function updateUI() {
-                // সব ব্যালেন্স আপডেট
-                document.getElementById('home-balance').textContent = userState.balance.toFixed(2);
-                document.getElementById('withdraw-balance-display').value = `${userState.balance.toFixed(2)} TAKA`;
+            updateUI(); // প্রথমবার UI লোড করা
 
-                // ইউজারের নাম
-                document.getElementById('user-name').textContent = userState.name;
-                
-                // টাস্ক প্রগ্রেস
-                const progressText = `${userState.tasksCompleted} / ${userState.totalTasks}`;
-                document.getElementById('task-progress-text').textContent = progressText;
+            // --- ইভেন্ট লিসেনার ---
 
-                // রেফার কাউন্ট
-                document.getElementById('refer-count').textContent = userState.referrals;
-            }
-
-            // ৩. অ্যাপ লোড হওয়ার সাথে সাথে প্রথমবার UI আপডেট করা
-            updateUI();
-
-
-            // --- ইভেন্ট লিসেনার (Event Listeners) ---
-
-            // ১. পপআপ বন্ধ করার বাটন
             closePopupBtn.addEventListener('click', () => {
                 popup.style.display = 'none';
             });
 
-            // ২. নিচের নেভিগেশন বাটন (পেজ পরিবর্তন)
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const targetPageId = button.dataset.page; 
-
                     pages.forEach(page => page.classList.remove('active'));
                     document.getElementById(targetPageId).classList.add('active');
-
                     navButtons.forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
                 });
             });
 
-            // ৩. টাস্ক ক্লেইম বাটন
-            const claimButtons = document.querySelectorAll('.claim-btn');
             claimButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const taskId = button.dataset.taskId;
-
-                    // যদি এই টাস্কটি আগেই ক্লেইম করা হয়ে থাকে
                     if (userState.claimedTasks.includes(taskId)) {
-                        tg.HapticFeedback.notificationOccurred('warning');
-                        alert("আপনি এই টাস্কটি ইতোমধ্যেই ক্লেইম করেছেন।");
+                        showToast("আপনি এই টাস্কটি আগেই ক্লেইম করেছেন।");
                         return;
                     }
-
-                    // রিওয়ার্ড অ্যামাউন্ট নেওয়া
-                    const reward = parseFloat(button.dataset.reward);
                     
-                    // স্টেট আপডেট করা
+                    // --- পার্ট ১ এর কাজ এখানে ---
+                    // এখন এটি সিমুলেশন। রিয়েল অ্যাপে এখানে ব্যাকএন্ডে কল করতে হবে।
+                    // যেমন: checkTaskCompletion(taskId);
+                    
+                    // সিমুলেশন কোড:
+                    const reward = parseFloat(button.dataset.reward);
                     userState.balance += reward;
                     userState.tasksCompleted += 1;
-                    userState.claimedTasks.push(taskId); // টাস্কটিকে ক্লেইমড লিস্টে যোগ করা
-
-                    // UI আপডেট করা
+                    userState.claimedTasks.push(taskId);
                     updateUI();
-
-                    // বাটনটি ডিসেবল করে দেওয়া
                     button.textContent = '✅ ক্লেইমড';
                     button.disabled = true;
-
-                    // ইউজারকে ফিডব্যাক দেওয়া
+                    showToast(`আপনি ${reward.toFixed(2)} TAKA ক্লেইম করেছেন!`, 'success');
                     tg.HapticFeedback.notificationOccurred('success');
-                    tg.showPopup({
-                        title: 'অভিনন্দন!',
-                        message: `আপনি ${reward.toFixed(2)} TAKA ক্লেইম করেছেন! আপনার নতুন ব্যালেন্স ${userState.balance.toFixed(2)} TAKA.`,
-                        buttons: [{type: 'ok'}]
-                    });
                 });
             });
 
-            // ৪. উইথড্র সাবমিট বাটন
+            // --- উইথড্র বাটন (নতুন টোস্ট এরর সহ) ---
             document.getElementById('withdraw-submit-btn').addEventListener('click', () => {
                 const amount = parseFloat(document.getElementById('amount').value);
                 const accountNumber = document.getElementById('account-number').value;
 
                 if (!accountNumber || !amount) {
+                    showToast("দয়া করে একউন্ট নম্বর এবং অ্যামাউন্ট লিখুন।");
                     tg.HapticFeedback.notificationOccurred('error');
-                    alert("দয়া করে একউন্ট নম্বর এবং অ্যামাউন্ট লিখুন।");
                     return;
                 }
                 if (amount < 1000) {
+                    showToast("ন্যূনতম 1000 TAKA উইথড্র করতে হবে।");
                     tg.HapticFeedback.notificationOccurred('error');
-                    alert("ন্যূনতম 1000 TAKA উইথড্র করতে হবে।");
                     return;
                 }
                 if (amount > userState.balance) {
+                    showToast("আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই।");
                     tg.HapticFeedback.notificationOccurred('error');
-                    alert("আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই।");
                     return;
                 }
                 
-                // (এখানে আপনার ব্যাকএন্ডে রিকোয়েস্ট পাঠানোর কোড থাকবে)
-                
-                // সিমুলেশন
-                alert("আপনার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে। অ্যাডমিন এটি রিভিউ করবেন।");
-                
-                // ব্যালেন্স কমানো 
+                alert("আপনার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে।");
                 userState.balance -= amount;
                 updateUI();
             });
+
+            // সকল 'ক্লেইম' বাটন সিলেক্ট করা
+            const claimButtons = document.querySelectorAll('.claim-btn');
 
         });
     </script>
